@@ -1,0 +1,105 @@
+--Worldwide Data for Export with only relevant columns
+SELECT 
+	public.customers.customer_id,
+	public.orders.order_id,
+	public.orders.order_date,
+	public.customers.segment,
+	public.orders.product_id,
+	public.products.category,
+	public.products.sub_category,
+	public.products.product_name,
+	public.orders.sales,
+	public.orders.quantity,
+	public.orders.profit,
+	public.returns.return_date,
+	public.returns.return_quantity,
+	public.returns.reason_returned,
+	public.regions.region_id,
+	public.regions.country,
+	public.regions.sub_region
+FROM public.orders
+INNER JOIN public.customers ON public.customers.customer_id=public.orders.customer_id
+INNER JOIN public.products ON public.products.product_id=public.orders.product_id
+INNER JOIN public.returns ON public.returns.order_id=public.orders.order_id
+INNER JOIN public.regions ON public.regions.region_id=public.orders.region_id
+;
+
+
+
+
+--Top 5 Countries With Highest Sales
+SELECT DISTINCT
+ public.regions.country,
+ SUM (public.orders.sales) AS sum_of_sales
+FROM public.orders
+INNER JOIN public.regions on public.orders.region_id=public.regions.region_id
+group by public.regions.country
+ORDER BY SUM (public.orders.sales) desc
+LIMIT 5
+;
+
+--Top 5 Countries with Highest Profit
+SELECT DISTINCT
+ public.regions.country,
+ SUM (public.orders.profit) AS sum_of_profit
+FROM public.orders
+INNER JOIN public.regions on public.orders.region_id=public.regions.region_id
+group by public.regions.country
+ORDER BY SUM (public.orders.profit) desc
+LIMIT 5
+;
+
+
+
+--Goal: Determine region IDs for United States
+SELECT *
+FROM public.regions
+WHERE country = 'United States'
+;
+--Result: 4553,5636,1488,3688
+
+
+
+
+--Goal: Review US Returns
+SELECT *
+FROM public.returns
+INNER JOIN public.orders ON public.orders.order_id=public.returns.order_id
+WHERE public.orders.region_id = 4553 OR public.orders.region_id = 5636 OR public.orders.region_id = 1488 OR public.orders.region_id = 3688
+;
+
+
+--Top Performing Customer Segments in US?
+SELECT DISTINCT
+	public.customers.segment,
+	SUM (public.orders.sales) AS sum_of_sales
+FROM public.orders
+INNER JOIN public.customers ON public.customers.customer_id=public.orders.customer_id
+INNER JOIN public.regions ON public.regions.region_id=public.orders.region_id
+WHERE country = 'United States'
+GROUP BY public.customers.segment
+ORDER BY SUM (public.orders.sales) DESC;
+
+--Top Performing Product Segments?
+SELECT DISTINCT
+	public.products.category,
+	SUM (public.orders.sales) AS sum_of_sales
+FROM public.products
+INNER JOIN public.orders ON public.orders.product_id=public.products.product_id
+INNER JOIN public.regions ON public.regions.region_id=public.orders.region_id
+WHERE country = 'United States' 
+GROUP BY public.products.category
+ORDER BY SUM (public.orders.sales) DESC;
+
+
+--Top Performing Sub-Categories?
+SELECT DISTINCT
+	public.products.sub_category,
+	SUM (public.orders.sales) AS sum_of_sales
+FROM public.products
+INNER JOIN public.orders ON public.orders.product_id=public.products.product_id
+INNER JOIN public.regions ON public.regions.region_id=public.orders.region_id
+WHERE country = 'United States' AND category = 'Technology'
+GROUP BY public.products.sub_category
+ORDER BY SUM (public.orders.sales) DESC;
+
